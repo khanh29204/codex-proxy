@@ -1,13 +1,12 @@
 # ── Stage 1: Build native TLS addon (Rust → .node) ──────────────────
+# Share the exact Node runtime with the app while keeping Rust in this stage.
+FROM node:22.23.4-slim AS node-runtime
+
 FROM rust:1-slim AS native-builder
+COPY --from=node-runtime /usr/local/ /usr/local/
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends build-essential python3 curl ca-certificates gnupg && \
-    rm -rf /var/lib/apt/lists/*
-
-# Install Node.js 20 (needed by napi-rs CLI)
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
-    apt-get install -y --no-install-recommends nodejs && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /native
@@ -22,7 +21,7 @@ COPY native/ ./
 RUN npm ci && npm run build
 
 # ── Stage 2: Application ────────────────────────────────────────────
-FROM node:20-slim
+FROM node-runtime
 
 # The checked-in default is loopback-only for local source installs. Containers
 # need to listen on all interfaces inside the network namespace so published

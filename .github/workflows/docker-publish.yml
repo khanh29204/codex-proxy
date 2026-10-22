@@ -262,7 +262,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: "22.23.4"
 
       - name: Build core and Lite server bundle
         run: |
@@ -345,7 +345,7 @@ jobs:
         run: |
           # The staged tree must start the server with nothing but its own
           # files (no node_modules, sqlite via the node:sqlite builtin). Run
-          # it in the same node:22-alpine base the image uses, with the musl
+          # it in the same node:22.23.4-alpine base the image uses, with the musl
           # addon — this replaces the old glibc-runner smoke that existed only
           # to avoid building the addon a second time (see the removed gnu
           # build step in git history).
@@ -353,13 +353,13 @@ jobs:
           # Pull the base image first: an implicit pull inside `docker run -d`
           # delays container start by the pull duration and races the health
           # poll below (first run after a runner image update pulls ~30s).
-          docker pull node:22-alpine >/dev/null
+          docker pull node:22.23.4-alpine >/dev/null
           # CODEX_PROXY_HOST=0.0.0.0 matches the image ENV: without it the
           # server binds 127.0.0.1 inside the container and the published
           # port never answers.
           docker run -d --rm --name "lite-staged-smoke-${{ github.run_id }}-${{ github.run_attempt }}" \
             -p 18080:8080 -e CODEX_PROXY_HOST=0.0.0.0 \
-            -v "$STAGE:/app" -w /app node:22-alpine \
+            -v "$STAGE:/app" -w /app node:22.23.4-alpine \
             node app/server.mjs --portable --mode=server --port 8080
           CNAME="lite-staged-smoke-${{ github.run_id }}-${{ github.run_attempt }}"
           cleanup() { docker rm -f "$CNAME" >/dev/null 2>&1 || true; }
